@@ -20,6 +20,6 @@ const participantSchema = new mongoose.Schema({
    },
 }, {timestamps: true})
 
-const participant = mongoose.model("Participant", participantSchema)
+const participant = mongoose.model("participant", participantSchema)
 
 export default participant

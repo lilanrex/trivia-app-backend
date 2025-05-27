@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import participant from "./players";
+import participant from "./players.js";
 
 const roomShema = new mongoose.Schema({
     roomCode: {

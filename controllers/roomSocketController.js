@@ -1,7 +1,7 @@
 
-import participant from "../models.js/players";
-import Room from "../models.js/room";
-import question from "../models.js/questions";
+import participant from "../models/players.js";
+import Room from "../models/room.js";
+import question from "../models/questions.js";
 
 export const joinRoom = async (socket, io, data) => {
           try {
@@ -16,16 +16,17 @@ export const joinRoom = async (socket, io, data) => {
             const newParticipant = await participant.create({
                 username,
                 socketId: socket.id,
-                room: room._id
+                roomCode: roomCode
             }) 
-            room.participant.push(newParticipant._id)
+            console.log(newParticipant)
+            room.participants.push(newParticipant._id)
             await room.save()
 
             socket.join(roomCode) // so this practically joins users(sockets) into a particular room code, used to 
             // a socket ( user) to a named group 
             
            
-            const updatedRoom = await Room.findOneById(room._id).populate('participants')
+            const updatedRoom = await Room.findById(room._id).populate('participants')
             io.to(roomCode).emit('updatedParticipantList', updatedRoom.participants)
 
             socket.emit('joinedRoom', {
@@ -57,7 +58,7 @@ export const joinRoom = async (socket, io, data) => {
 export const startGame = async (socket, io, data) => {
     try {
      const{roomCode} = data
-     const room = await room.findOne({roomCode})
+     const room = await Room.findOne({roomCode})
      
      if (!room) {
         return socket.emit('startGameError', {message:'Room not found'})
@@ -82,7 +83,7 @@ export const startGame = async (socket, io, data) => {
      await room.save()
 
      const firstQuestionId = room.questions[0]
-     const firstQuestion = await question.findOneById(firstQuestionId)
+     const firstQuestion = await question.findById(firstQuestionId)
      
      if (!firstQuestion) {
         console.error(`error starting game ${roomCode}: First question(${firstQuestionId}) not found`)
