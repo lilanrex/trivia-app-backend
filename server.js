@@ -3,7 +3,7 @@ import roomRoutes from './routes/roomRoutes.js'
 import questionRoutes from './routes/questionRoutes.js'
 import dotenv from 'dotenv'
 import http from 'http'
-import { joinRoom,startGame } from "./controllers/roomSocketController.js"
+import { joinRoom,startGame,submitAnswer } from "./controllers/roomSocketController.js"
 
 import cors from 'cors'
 dotenv.config()
@@ -15,7 +15,7 @@ app.use(express.json())
 
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000', // Your default/main frontend
-    'http://127.0.0.1:5500', // Typical VS Code Live Server origin
+    'http://127.0.0.1:5502', // Typical VS Code Live Server origin
     
 ];
 

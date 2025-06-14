@@ -107,3 +107,66 @@ export const startGame = async (socket, io, data) => {
 }
 
 
+export const submitAnswer = async (socket, io, data) => {
+   // this handles a player submitting an answer for te current question
+
+   try {
+     const {roomCode, answer} = data;
+     // find and validate the room, we're using .populate because we'll be searching for participants socketId rather than objectId
+     const room = await Room.findOne({roomCode}).populate('participants')
+     if (!room||!room.isActive||!room.gameStarted) {
+      return socket.emit('answerError', {message: 'cannot submit answer. Room is not active or game has not started'})
+     }
+
+     // finding the current question to get the correct answer
+     const currentQuestionId = room.questions[room.currentQuestionIndex]
+     if(!currentQuestionId) {
+      return socket.emit('answerError', {message: 'could not determine the current question'})
+     }
+     const currentQuestion = await question.findById(currentQuestionId)
+     if(!currentQuestion) {
+      return socket.emit('answerError', {message: 'Error fetching current question details'})
+     }
+     // find the participants in the room's array using thier socket.id
+     const participantz = room.participants.find(p => p.socketId === socket.id )
+     if (!participantz) {
+      return socket.emit('answerError', {message:'not a registered participant'})
+     }
+
+     //we need to implement a prevention for answering twice 
+     if (participantz.hasAnswered) {
+      return socket.emit('answerError', {message: 'you have already answered the question'})
+     }
+
+     participantz.hasAnswered = true
+
+     //checking if the submitted answer is correct
+     let isCorrect = false
+     if(answer === currentQuestion.correctAnswer) {
+      isCorrect = true
+      // increase participant's score by 100 points
+      participantz.score += 100
+     }
+
+     await room.save()  // we're saving the room with the updated score, because participant(participantz) is a subdocument within the room document, saving the room will save the score change
+
+     // sending an immediate feedback to the players who answered
+     socket.emit('answerResult', {
+      isCorrect: isCorrect,
+      correctAnswer: currentQuestion.correctAnswer,
+      yourScore: participantz.score
+     })
+
+     console.log(`Player ${participantz.username} in room ${roomCode} answered. Correct: ${isCorrect}`)
+     
+     //letting the host know who answered
+     io.to(room.hostSocketId).emit('playerAnswered', {
+      username: participantz.username,
+      socketId: participantz.socketId
+     })
+
+   } catch (error) {
+      console.error('submitError: ', err)
+      socket.emit('answerError', {message: 'Server error occured while submitting your answer'})
+   }
+}

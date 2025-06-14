@@ -14,6 +14,10 @@ const participantSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    hasAnswered: {
+       type: Boolean,
+       default:false
+    },
    roomCode: {
     type: String,
     required: true,
